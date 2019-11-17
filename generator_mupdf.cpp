@@ -21,12 +21,12 @@
 
 OKULAR_EXPORT_PLUGIN(MuPDFGenerator, "libokularGenerator_mupdf.json")
 
-MuPDFGenerator::MuPDFGenerator(QObject* parent, const QVariantList& args) : Generator(parent, args), m_synopsis(0) {
+MuPDFGenerator::MuPDFGenerator(QObject* parent, const QVariantList& args) : Generator(parent, args), m_synopsis{nullptr} {
     setFeature(Threaded);
     setFeature(TextExtraction);
 }
 
-MuPDFGenerator::~MuPDFGenerator() {}
+MuPDFGenerator::~MuPDFGenerator() = default;
 
 Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(const QString& fileName, QVector<Okular::Page*>& pages, const QString& password) {
     if (!m_pdfdoc.load(fileName)) { return Okular::Document::OpenError; }
@@ -43,7 +43,7 @@ Okular::Document::OpenResult MuPDFGenerator::loadDocumentWithPassword(const QStr
         QMuPDF::Page page = m_pdfdoc.page(i);
         const QSizeF s = page.size(dpi());
         const Okular::Rotation rot = Okular::Rotation0;
-        Okular::Page* okularPage = new Okular::Page(i, s.width(), s.height(), rot);
+        auto* okularPage = new Okular::Page(i, s.width(), s.height(), rot);
         okularPage->setDuration(page.duration());
         pages.append(okularPage);
     }
@@ -56,25 +56,25 @@ bool MuPDFGenerator::doCloseDocument() {
     m_pdfdoc.close();
 
     delete m_synopsis;
-    m_synopsis = 0;
+    m_synopsis = nullptr;
 
     return true;
 }
 
 Okular::DocumentInfo MuPDFGenerator::generateDocumentInfo(const QSet<Okular::DocumentInfo::Key>& keys) const {
-    QMutexLocker(userMutex());
+    QMutexLocker locker(userMutex());
 
     Okular::DocumentInfo info;
     info.set(Okular::DocumentInfo::MimeType, QStringLiteral("application/pdf"));
     info.set(Okular::DocumentInfo::Pages, QString::number(m_pdfdoc.pageCount()));
 #define SET(key, val)                                                                                                                                                                                  \
     if (keys.contains(key)) { info.set(key, val); }
-    SET(Okular::DocumentInfo::Title, m_pdfdoc.infoKey("Title"));
-    SET(Okular::DocumentInfo::Subject, m_pdfdoc.infoKey("Subject"));
-    SET(Okular::DocumentInfo::Author, m_pdfdoc.infoKey("Author"));
-    SET(Okular::DocumentInfo::Keywords, m_pdfdoc.infoKey("Keywords"));
-    SET(Okular::DocumentInfo::Creator, m_pdfdoc.infoKey("Creator"));
-    SET(Okular::DocumentInfo::Producer, m_pdfdoc.infoKey("Producer"));
+    SET(Okular::DocumentInfo::Title, m_pdfdoc.infoKey("Title"))
+    SET(Okular::DocumentInfo::Subject, m_pdfdoc.infoKey("Subject"))
+    SET(Okular::DocumentInfo::Author, m_pdfdoc.infoKey("Author"))
+    SET(Okular::DocumentInfo::Keywords, m_pdfdoc.infoKey("Keywords"))
+    SET(Okular::DocumentInfo::Creator, m_pdfdoc.infoKey("Creator"))
+    SET(Okular::DocumentInfo::Producer, m_pdfdoc.infoKey("Producer"))
 #undef SET
     if (keys.contains(Okular::DocumentInfo::CustomKeys)) { info.set(QStringLiteral("format"), i18nc("PDF v. <version>", "PDF v. %1", m_pdfdoc.pdfVersion()), i18n("Format")); }
     return info;
@@ -113,7 +113,7 @@ const Okular::DocumentSynopsis* MuPDFGenerator::generateDocumentSynopsis() {
     if (m_synopsis) { return m_synopsis; }
 
     QMuPDF::Outline* outline = m_pdfdoc.outline();
-    if (!outline) { return 0; }
+    if (!outline) { return nullptr; }
 
     m_synopsis = new Okular::DocumentSynopsis();
     recurseCreateTOC(m_pdfdoc, *m_synopsis, outline, *m_synopsis, dpi());

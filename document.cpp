@@ -23,7 +23,7 @@ namespace QMuPDF {
 QRectF convert_fz_rect(const fz_rect& rect, const QSizeF& dpi);
 
 struct Document::Data {
-    Data() : ctx(fz_new_context(NULL, NULL, FZ_STORE_DEFAULT)), mdoc(0), stream(0), pageCount(0), info(0), pageMode(Document::UseNone), locked(false) {}
+    Data() : ctx(fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT)), mdoc(nullptr), stream(nullptr), pageCount(0), info(nullptr), pageMode(Document::UseNone), locked(false) {}
 
     fz_context* ctx;
     fz_document* mdoc;
@@ -108,11 +108,11 @@ void Document::close() {
     if (!d->mdoc) { return; }
 
     fz_drop_document(d->ctx, d->mdoc);
-    d->mdoc = 0;
+    d->mdoc = nullptr;
     fz_drop_stream(d->ctx, d->stream);
-    d->stream = 0;
+    d->stream = nullptr;
     d->pageCount = 0;
-    d->info = 0;
+    d->info = nullptr;
     d->pageMode = UseNone;
     d->locked = false;
 }
@@ -126,9 +126,7 @@ bool Document::unlock(const QByteArray& password) {
     if (!fz_authenticate_password(d->ctx, d->mdoc, a.data())) { return false; }
 
     d->locked = false;
-    if (!d->load()) { return false; }
-
-    return true;
+    return d->load();
 }
 
 int Document::pageCount() const { return d->pageCount; }
@@ -161,7 +159,7 @@ QString Document::infoKey(const QByteArray& key) const {
     pdf_obj* obj = pdf_dict_gets(d->ctx, d->info, key.constData());
     if (obj) {
         obj = pdf_resolve_indirect(d->ctx, obj);
-        char* value = pdf_to_utf8(d->ctx, obj);
+        char* value = pdf_to_str_buf(d->ctx, obj);
         if (value) {
             const QString res = QString::fromUtf8(value);
             fz_free(d->ctx, value);
@@ -173,7 +171,7 @@ QString Document::infoKey(const QByteArray& key) const {
 
 Outline* Document::outline() const {
     fz_outline* out = fz_load_outline(d->ctx, d->mdoc);
-    if (!out) { return 0; }
+    if (!out) return nullptr;
 
     Outline* item = new Outline;
     d->convertOutline(out, item);
