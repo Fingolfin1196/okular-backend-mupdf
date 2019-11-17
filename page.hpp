@@ -11,8 +11,8 @@
 #define QMUPDF_PAGE_HPP
 
 #include <QRect>
-#include <QString>
 #include <QSharedDataPointer>
+#include <QString>
 
 class QImage;
 class QSizeF;
@@ -24,18 +24,17 @@ namespace QMuPDF {
 
 class TextBox;
 
-class Page
-{
+class Page {
 public:
-    Page(fz_context_s *ctx, fz_document_s *doc, int num);
-    Page(const Page &other);
+    Page(fz_context_s* ctx, fz_document_s* doc, int num);
+    Page(const Page& other);
 
     ~Page();
     int number() const;
-    QSizeF size(const QSizeF &dpi) const;
+    QSizeF size(const QSizeF& dpi) const;
     qreal duration() const;
     QImage render(qreal width, qreal height) const;
-    QVector<TextBox *> textBoxes(const QSizeF &dpi) const;
+    QVector<TextBox*> textBoxes(const QSizeF& dpi) const;
 
 private:
     Page();
@@ -45,18 +44,18 @@ private:
 
 class TextBox {
 public:
-    TextBox(QChar c, const QRectF &bbox)
-        : m_text(c), m_rect(bbox), m_end(false) { }
+    TextBox(QChar c, const QRectF& bbox) : m_text(c), m_rect(bbox), m_end(false) {}
     QRectF rect() const { return m_rect; }
     QChar text() const { return m_text; }
     bool isAtEndOfLine() const { return m_end; }
     void markAtEndOfLine() { m_end = true; }
+
 private:
     QChar m_text;
     QRectF m_rect;
     bool m_end : 1;
 };
 
-}
+} // namespace QMuPDF
 
 #endif

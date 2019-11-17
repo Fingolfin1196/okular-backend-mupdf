@@ -17,31 +17,28 @@
 #include <okular/core/sourcereference.h>
 #include <okular/core/version.h>
 
-class MuPDFGenerator : public Okular::Generator
-{
+class MuPDFGenerator : public Okular::Generator {
     Q_OBJECT
-    Q_INTERFACES( Okular::Generator )
+    Q_INTERFACES(Okular::Generator)
 
 public:
-    MuPDFGenerator(QObject *parent, const QVariantList &args);
+    MuPDFGenerator(QObject* parent, const QVariantList& args);
     virtual ~MuPDFGenerator();
 
-    Okular::Document::OpenResult loadDocumentWithPassword(
-        const QString &fileName, QVector<Okular::Page *> &pages,
-        const QString &password) override;
+    Okular::Document::OpenResult loadDocumentWithPassword(const QString& fileName, QVector<Okular::Page*>& pages, const QString& password) override;
 
-    Okular::DocumentInfo generateDocumentInfo(const QSet<Okular::DocumentInfo::Key> &keys) const override;
-    const Okular::DocumentSynopsis *generateDocumentSynopsis() override;
-    QVariant metaData(const QString &key, const QVariant &option) const override;
+    Okular::DocumentInfo generateDocumentInfo(const QSet<Okular::DocumentInfo::Key>& keys) const override;
+    const Okular::DocumentSynopsis* generateDocumentSynopsis() override;
+    QVariant metaData(const QString& key, const QVariant& option) const override;
 
 protected:
     bool doCloseDocument() override;
-    QImage image(Okular::PixmapRequest *page) override;
-    Okular::TextPage* textPage(Okular::TextRequest *request) override;
-    
+    QImage image(Okular::PixmapRequest* page) override;
+    Okular::TextPage* textPage(Okular::TextRequest* request) override;
+
 private:
     QMuPDF::Document m_pdfdoc;
-    Okular::DocumentSynopsis *m_synopsis;
+    Okular::DocumentSynopsis* m_synopsis;
 };
 
 #endif

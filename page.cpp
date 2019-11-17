@@ -16,11 +16,9 @@ extern "C" {
 #include <QImage>
 #include <QSharedData>
 
-namespace QMuPDF
-{
+namespace QMuPDF {
 
-QRectF convert_fz_rect(const fz_rect &rect, const QSizeF &dpi)
-{
+QRectF convert_fz_rect(const fz_rect& rect, const QSizeF& dpi) {
     const float scaleX = dpi.width() / 72.;
     const float scaleY = dpi.height() / 72.;
     const QPointF topLeft(rect.x0 * scaleX, rect.y0 * scaleY);
@@ -28,13 +26,12 @@ QRectF convert_fz_rect(const fz_rect &rect, const QSizeF &dpi)
     return QRectF(topLeft, bottomRight);
 }
 
-QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
-{
+QImage convert_fz_pixmap(fz_context* ctx, fz_pixmap* image) {
     const int w = fz_pixmap_width(ctx, image);
     const int h = fz_pixmap_height(ctx, image);
     QImage img(w, h, QImage::Format_ARGB32);
-    unsigned char *data = fz_pixmap_samples(ctx, image);
-    unsigned int *imgdata = (unsigned int *)img.bits();
+    unsigned char* data = fz_pixmap_samples(ctx, image);
+    unsigned int* imgdata = (unsigned int*)img.bits();
     for (int i = 0; i < h; ++i) {
         for (int j = 0; j < w; ++j) {
             *imgdata = qRgba(data[0], data[1], data[2], data[3]);
@@ -45,28 +42,19 @@ QImage convert_fz_pixmap(fz_context *ctx, fz_pixmap *image)
     return img;
 }
 
-struct Page::Data : public QSharedData
-{
-    Data(): pageNum(-1), doc(0), page(0) { }
+struct Page::Data : public QSharedData {
+    Data() : pageNum(-1), doc(0), page(0) {}
     int pageNum;
-    fz_context *ctx;
-    fz_document *doc;
-    fz_page *page;
+    fz_context* ctx;
+    fz_document* doc;
+    fz_page* page;
 };
 
-Page::Page()
-    : d(new Data)
-{
-}
+Page::Page() : d(new Data) {}
 
-Page::~Page()
-{
-    fz_drop_page(d->ctx, d->page);
-}
+Page::~Page() { fz_drop_page(d->ctx, d->page); }
 
-Page::Page(fz_context_s *ctx, fz_document_s *doc, int num) :
-    d(new Page::Data)
-{
+Page::Page(fz_context_s* ctx, fz_document_s* doc, int num) : d(new Page::Data) {
     Q_ASSERT(doc && ctx);
     d->page = fz_load_page(ctx, doc, num);
     d->pageNum = num;
@@ -74,83 +62,67 @@ Page::Page(fz_context_s *ctx, fz_document_s *doc, int num) :
     d->ctx = ctx;
 }
 
-Page::Page(const Page &other) :
-    d(other.d)
-{
-}
+Page::Page(const Page& other) : d(other.d) {}
 
-int Page::number() const
-{
-    return d->pageNum;
-}
+int Page::number() const { return d->pageNum; }
 
-QSizeF Page::size(const QSizeF &dpi) const
-{
+QSizeF Page::size(const QSizeF& dpi) const {
     fz_rect rect;
     fz_bound_page(d->ctx, d->page, &rect);
     // MuPDF always assumes 72dpi
-    return QSizeF((rect.x1 - rect.x0) * dpi.width() / 72.,
-                  (rect.y1 - rect.y0) * dpi.height() / 72.);
+    return QSizeF((rect.x1 - rect.x0) * dpi.width() / 72., (rect.y1 - rect.y0) * dpi.height() / 72.);
 }
 
-qreal Page::duration() const
-{
+qreal Page::duration() const {
     float val;
     (void)fz_page_presentation(d->ctx, d->page, NULL, &val);
     return val < 0.1 ? -1 : val;
 }
 
-QImage Page::render(qreal width, qreal height) const
-{
+QImage Page::render(qreal width, qreal height) const {
     const QSizeF s = size(QSizeF(72, 72));
 
     fz_matrix ctm;
     fz_scale(&ctm, width / s.width(), height / s.height());
 
-    fz_cookie cookie = { 0, 0, 0, 0, 0, 0 };
-    fz_colorspace *csp = fz_device_rgb(d->ctx);
-    fz_pixmap *image = fz_new_pixmap(d->ctx, csp, width, height, NULL, 1);
+    fz_cookie cookie = {0, 0, 0, 0, 0, 0};
+    fz_colorspace* csp = fz_device_rgb(d->ctx);
+    fz_pixmap* image = fz_new_pixmap(d->ctx, csp, width, height, NULL, 1);
     fz_clear_pixmap_with_value(d->ctx, image, 0xff);
-    fz_device *device = fz_new_draw_device(d->ctx, NULL, image);
+    fz_device* device = fz_new_draw_device(d->ctx, NULL, image);
     fz_run_page(d->ctx, d->page, device, &ctm, &cookie);
     fz_drop_device(d->ctx, device);
 
     QImage img;
-    if (!cookie.errors) {
-        img = convert_fz_pixmap(d->ctx, image);
-    }
+    if (!cookie.errors) { img = convert_fz_pixmap(d->ctx, image); }
     fz_drop_pixmap(d->ctx, image);
     return img;
 }
 
-QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
-{
-    fz_cookie cookie = { 0, 0, 0, 0, 0, 0 };
-    fz_stext_page *page = fz_new_stext_page(d->ctx, &fz_empty_rect);
-    fz_device *device = fz_new_stext_device(d->ctx, page, NULL);
+QVector<TextBox*> Page::textBoxes(const QSizeF& dpi) const {
+    fz_cookie cookie = {0, 0, 0, 0, 0, 0};
+    fz_stext_page* page = fz_new_stext_page(d->ctx, &fz_empty_rect);
+    fz_device* device = fz_new_stext_device(d->ctx, page, NULL);
     fz_run_page(d->ctx, d->page, device, &fz_identity, &cookie);
     fz_drop_device(d->ctx, device);
     if (cookie.errors) {
         fz_drop_stext_page(d->ctx, page);
-        return QVector<TextBox *>();
+        return QVector<TextBox*>();
     }
 
-    QVector<TextBox *> boxes;
+    QVector<TextBox*> boxes;
 
-    for (fz_stext_block *block = page->first_block; block; block = block->next) {
-        if (block->type != FZ_STEXT_BLOCK_TEXT)
-            continue;
-        for (fz_stext_line *line = block->u.t.first_line; line; line = line->next) {
+    for (fz_stext_block* block = page->first_block; block; block = block->next) {
+        if (block->type != FZ_STEXT_BLOCK_TEXT) continue;
+        for (fz_stext_line* line = block->u.t.first_line; line; line = line->next) {
             bool hasText = false;
-            for (fz_stext_char *ch = line->first_char; ch; ch = ch->next) {
+            for (fz_stext_char* ch = line->first_char; ch; ch = ch->next) {
                 const int text = ch->c;
-                TextBox *box = new TextBox(text, convert_fz_rect(ch->bbox, dpi));
+                TextBox* box = new TextBox(text, convert_fz_rect(ch->bbox, dpi));
                 boxes.append(box);
                 hasText = true;
             }
-            if (hasText) {
-                boxes.back()->markAtEndOfLine();
-            }
+            if (hasText) { boxes.back()->markAtEndOfLine(); }
         }
     }
 
@@ -159,4 +131,4 @@ QVector<TextBox *> Page::textBoxes(const QSizeF &dpi) const
     return boxes;
 }
 
-}
+} // namespace QMuPDF

@@ -26,47 +26,42 @@ class Outline;
 
 class Document {
 public:
-    enum PageMode {
-        UseNone,
-        UseOutlines,
-        UseThumbs,
-        FullScreen,
-        UseOC,
-        UseAttachments
-    };
+    enum PageMode { UseNone, UseOutlines, UseThumbs, FullScreen, UseOC, UseAttachments };
     Document();
     ~Document();
-    bool load(const QString &fileName);
+    bool load(const QString& fileName);
     void close();
     bool isLocked() const;
-    bool unlock(const QByteArray &password);
+    bool unlock(const QByteArray& password);
     int pageCount() const;
     Page page(int page) const;
     QList<QByteArray> infoKeys() const;
-    QString infoKey(const QByteArray &key) const;
-    Outline *outline() const;
+    QString infoKey(const QByteArray& key) const;
+    Outline* outline() const;
     float pdfVersion() const;
     PageMode pageMode() const;
-    fz_context *ctx() const;
-    fz_document *doc() const;
+    fz_context* ctx() const;
+    fz_document* doc() const;
+
 private:
     Q_DISABLE_COPY(Document)
     struct Data;
-    Data *d;
+    Data* d;
 };
 
 class LinkDest;
 
 class Outline {
 public:
-    Outline(const fz_outline *fz);
-    Outline(): m_open(false) { }
+    Outline(const fz_outline* fz);
+    Outline() : m_open(false) {}
     ~Outline();
     QString title() const { return m_title; }
     bool isOpen() const { return m_open; }
     QVector<Outline*> children() const { return m_children; }
-    void appendChild(Outline *child) { m_children.push_back(child); }
-    const std::string &link() const { return m_link; }
+    void appendChild(Outline* child) { m_children.push_back(child); }
+    const std::string& link() const { return m_link; }
+
 private:
     Q_DISABLE_COPY(Outline)
     QString m_title;
@@ -75,6 +70,6 @@ private:
     std::string m_link;
 };
 
-}
+} // namespace QMuPDF
 
 #endif
